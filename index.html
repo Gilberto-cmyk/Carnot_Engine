@@ -1,0 +1,1853 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carnot Engine - BAG TEAM</title>
+    <link href="lib/bootstrap.min.css" rel="stylesheet">
+    <script src="lib/bootstrap.bundle.min.js"></script>
+    <script src="lib/chart.js"></script>
+    <style>
+        /* === ARQUITECTURA DE TEMAS BASE === */
+        :root {
+            --bg-color: #000000;
+            --text-main: #f5f5f7;
+            --text-muted: #a1a1aa;
+            --text-info: #60a5fa;
+            --card-bg: rgba(40, 20, 60, 0.3);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --input-bg: rgba(255, 255, 255, 0.05);
+            --input-border: rgba(168, 85, 247, 0.3);
+            --input-focus: rgba(168, 85, 247, 0.25);
+            --input-text: #e9d5ff;
+            --select-bg: #1a0b2e;
+            --table-border: rgba(255, 255, 255, 0.05);
+            --chart-grid: rgba(255, 255, 255, 0.05);
+
+            --font-family-main: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+            --radius-card: 24px;
+            --radius-input: 12px;
+            --glass-blur: 25px;
+            --accent-primary: #a855f7;
+            --accent-secondary: #9333ea;
+            --accent-glow: rgba(147, 51, 234, 0.4);
+            --particle-fill: rgba(168, 85, 247, 0.4);
+            --glass-shadow: rgba(0, 0, 0, 0.4);
+            --btn-gradient: linear-gradient(135deg, var(--accent-secondary), var(--accent-primary));
+        }
+
+        /* === MODO CLARO GLOBAL === */
+        body.light-mode {
+            --bg-color: #f0f4f8;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --text-info: #2563eb;
+            --card-bg: rgba(255, 255, 255, 0.6);
+            --card-border: rgba(0, 0, 0, 0.1);
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --input-border: rgba(0, 0, 0, 0.2);
+            --input-focus: rgba(0, 0, 0, 0.1);
+            --input-text: #1e293b;
+            --select-bg: #ffffff;
+            --table-border: rgba(0, 0, 0, 0.05);
+            --chart-grid: rgba(0, 0, 0, 0.05);
+            --glass-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        body.light-mode[data-theme="google"] {
+            --card-bg: #ffffff;
+            --input-bg: #f1f3f4;
+        }
+
+        .btn-outline-purple {
+            color: var(--accent-primary);
+            border-color: rgba(168, 85, 247, 0.4);
+            background: transparent;
+        }
+
+        .btn-outline-purple:hover,
+        .btn-outline-purple.active {
+            background-color: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: #ffffff;
+        }
+
+        /* === ESTILOS NÚCLEO === */
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-family-main);
+            overflow-x: hidden;
+            margin: 0;
+            padding-bottom: 50px;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-card);
+            padding: 30px;
+            box-shadow: 0 20px 40px var(--glass-shadow);
+            transition: all 0.4s ease;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        .form-control,
+        .form-select {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--input-text);
+            border-radius: var(--radius-input);
+            padding: 10px 15px;
+            font-family: var(--font-family-main);
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background: var(--input-bg);
+            color: var(--input-text);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 4px var(--input-focus);
+        }
+
+        option {
+            background-color: var(--select-bg);
+            color: var(--input-text);
+        }
+
+        .unit-addon {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-left: none;
+            color: var(--text-info);
+            font-weight: 600;
+            border-radius: 0 var(--radius-input) var(--radius-input) 0;
+        }
+
+        .text-muted-custom {
+            color: var(--text-muted) !important;
+            transition: color 0.4s ease;
+        }
+
+        .dynamic-title {
+            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            color: transparent;
+            font-weight: 700;
+            transition: all 0.4s ease;
+        }
+
+        /* Botón de Analizar */
+        .btn-apple {
+            background: var(--btn-gradient);
+            border: none;
+            border-radius: var(--radius-input);
+            color: white;
+            font-weight: 600;
+            padding: 12px;
+            font-family: var(--font-family-main);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .btn-apple:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 20px var(--accent-glow);
+        }
+
+
+        .active-apple {
+            background: linear-gradient(135deg, #9333ea 0%, #c026d1 100%) !important;
+            border: none !important;
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+            border-radius: 8px !important;
+            color: white !important;
+        }
+
+        .btn-group .btn {
+            transition: all 0.3s ease;
+            font-size: 0.75rem;
+            padding: 5px 15px;
+        }
+
+        /* Controles Superiores */
+        .top-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: var(--input-border);
+            border-radius: 24px;
+            transition: 0.4s;
+            cursor: pointer;
+        }
+
+        .switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.4s;
+        }
+
+        body.light-mode .switch::after {
+            transform: translateX(20px);
+            background: var(--accent-primary);
+        }
+
+        .table {
+            --bs-table-bg: transparent;
+            --bs-table-color: var(--text-main);
+            margin-top: 20px;
+            font-size: 0.9rem;
+            font-family: var(--font-family-main);
+        }
+
+        .table-glass th {
+            border-bottom: 2px solid var(--accent-glow);
+            font-weight: 500;
+            color: var(--accent-primary);
+        }
+
+        .table-glass td {
+            border-bottom: 1px solid var(--table-border);
+            vertical-align: middle;
+        }
+
+        /* Piston Dinámico */
+        .engine-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            margin-top: 20px;
+        }
+
+        .cylinder {
+            width: 80px;
+            height: 140px;
+            border: 4px solid var(--card-border);
+            border-top: 6px solid var(--accent-primary);
+            border-radius: 4px 4px 10px 10px;
+            position: relative;
+            background: rgba(255, 255, 255, 0.02);
+            overflow: hidden;
+        }
+
+        .gas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: rgba(239, 68, 68, 0.4);
+            animation: gasCycle 4s infinite linear;
+        }
+
+        .piston {
+            width: 100%;
+            height: 25px;
+            background: var(--btn-gradient);
+            border-radius: 2px;
+            position: absolute;
+            top: 20px;
+            animation: pistonMove 4s infinite cubic-bezier(0.45, 0.05, 0.55, 0.95);
+            border: 1px solid var(--card-border);
+        }
+
+        .rod {
+            width: 8px;
+            height: 100px;
+            background: var(--text-muted);
+            margin: 0 auto;
+            position: absolute;
+            left: 35px;
+            top: 25px;
+        }
+
+        .phase-label {
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: var(--accent-primary);
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            animation: textCycle 4s infinite linear;
+        }
+
+        @keyframes pistonMove {
+
+            0%,
+            100% {
+                top: 20px;
+            }
+
+            25% {
+                top: 60px;
+            }
+
+            50% {
+                top: 100px;
+            }
+
+            75% {
+                top: 60px;
+            }
+        }
+
+        @keyframes gasCycle {
+
+            0%,
+            25% {
+                background: rgba(239, 68, 68, 0.4);
+            }
+
+            26%,
+            50% {
+                background: rgba(168, 85, 247, 0.1);
+            }
+
+            51%,
+            75% {
+                background: rgba(59, 130, 246, 0.4);
+            }
+
+            76%,
+            100% {
+                background: rgba(168, 85, 247, 0.1);
+            }
+        }
+
+        @keyframes textCycle {
+
+            0%,
+            24% {
+                content: "Exp Iso";
+                color: #ef4444;
+            }
+
+            25%,
+            49% {
+                content: "Exp Adia";
+                color: var(--accent-primary);
+            }
+
+            50%,
+            74% {
+                content: "Comp Iso";
+                color: #3b82f6;
+            }
+
+            75%,
+            99% {
+                content: "Comp Adia";
+                color: var(--accent-primary);
+            }
+        }
+
+        .phase-label::after {
+            content: "Exp Iso";
+            animation: textCycle 4s infinite;
+        }
+
+        /* Botón Exportar CSV */
+        .btn-export {
+            background: transparent;
+            border: 1px solid var(--accent-primary);
+            color: var(--accent-primary);
+            border-radius: 8px;
+            padding: 4px 10px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-export:hover {
+            background: var(--accent-primary);
+            color: var(--bg-color);
+        }
+
+        /* Alertas */
+        #alertSystem {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            width: 90%;
+            max-width: 500px;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            opacity: 0;
+            pointer-events: none;
+            top: -50px;
+        }
+
+        #alertSystem.show {
+            opacity: 1;
+            top: 20px;
+            pointer-events: auto;
+        }
+
+        .alert-glass {
+            background: var(--bg-color);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-input);
+            padding: 15px 25px;
+            box-shadow: 0 10px 30px var(--glass-shadow);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-left: 5px solid var(--accent-primary);
+            color: var(--text-main);
+            font-family: var(--font-family-main);
+        }
+
+        .alert-danger-custom {
+            border-left-color: #ef4444;
+        }
+
+        .alert-warning-custom {
+            border-left-color: #f59e0b;
+        }
+
+        .alert-info-custom {
+            border-left-color: #3b82f6;
+        }
+    </style>
+</head>
+
+<body data-theme="apple">
+
+    <canvas id="particleCanvas"></canvas>
+
+    <!-- CONTROLES SUPERIORES -->
+    <div class="top-controls">
+        <!-- Ícono de Menú (Selector de Secciones) -->
+        <div id="menuIcon" class="p-2" style="cursor: pointer;" data-bs-toggle="offcanvas"
+            data-bs-target="#sidebarMenu">
+            <div style="width: 25px; height: 3px; background: var(--text-main); margin: 4px 0; border-radius: 2px;">
+            </div>
+            <div style="width: 25px; height: 3px; background: var(--text-main); margin: 4px 0; border-radius: 2px;">
+            </div>
+            <div style="width: 25px; height: 3px; background: var(--text-main); margin: 4px 0; border-radius: 2px;">
+            </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="toggleTheme()">
+            <span class="text-muted-custom small fw-bold" id="themeLabel">DARK</span>
+            <div class="switch"></div>
+        </div>
+    </div>
+
+    <div id="alertSystem">
+        <div id="alertContent" class="alert-glass">
+            <span id="alertIcon" style="font-size: 1.5rem;">⚠️</span>
+            <div>
+                <strong id="alertTitle" style="display:block; font-size:1rem; margin-bottom:2px;">Alerta</strong>
+                <span id="alertMessage" class="text-muted-custom" style="font-size: 0.85rem;">Mensaje de error</span>
+            </div>
+        </div>
+    </div>
+    <div id="seccion-simulador">
+        <div class="container py-5">
+            <div class="text-center mb-5 mt-4">
+                <h2 class="dynamic-title">Ciclo de Carnot</h2>
+                <p class="text-muted-custom fw-bold">BDAG Team</p>
+            </div>
+
+            <div class="row g-4">
+                <!-- PANEL IZQUIERDO -->
+                <div class="col-lg-4">
+                    <div class="glass-card mb-4">
+                        <h5 style="font-weight: 600;">Configuración del Sistema</h5>
+                        <div class="row g-2 mt-2 mb-3 pb-3 border-bottom border-secondary border-opacity-25">
+                            <div class="col-6">
+                                <label class="small text-muted-custom">Unidad (V)</label>
+                                <select id="unitV" class="form-select">
+                                    <option value="cm3">cm³</option>
+                                    <option value="L">Litros (L)</option>
+                                    <option value="m3">m³</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="small text-muted-custom">Unidad (P)</label>
+                                <select id="unitP" class="form-select">
+                                    <option value="atm">atm</option>
+                                    <option value="kPa">kPa</option>
+                                    <option value="Pa">Pa</option>
+                                    <option value="bar">bar</option>
+                                    <option value="psi">PSI</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-3 pb-3 border-bottom border-secondary border-opacity-25">
+                            <div class="col-6">
+                                <label class="small text-muted-custom">Sustancia</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" id="gasAmount" class="form-control" value="1.0" min="0.001"
+                                        step="0.1" onchange="intentarAnalisis()">
+                                    <span class="input-group-text unit-addon">mol</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label class="small text-muted-custom">Índice (γ)</label>
+                                <select id="gammaType" class="form-select form-select-sm" onchange="intentarAnalisis()">
+                                    <option value="1.4">Aire (1.4)</option>
+                                    <option value="1.66">Monatómico (1.66)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="small text-muted-custom">V máx gráfica</label>
+                                <input type="number" id="limitV" class="form-control" value="5000" min="0.1" step="10">
+                            </div>
+                            <div class="col-6">
+                                <label class="small text-muted-custom">P máx gráfica</label>
+                                <input type="number" id="limitP" class="form-control" value="10" min="0.1" step="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card">
+                        <h5 style="font-weight: 600; margin-bottom: 20px;">Estados Termodinámicos</h5>
+                        <div id="inputs-grid"></div>
+                        <button onclick="intentarAnalisis()" class="btn-apple w-100 mt-4">Analizar Telemetría</button>
+                    </div>
+                </div>
+
+                <!-- PANEL DERECHO -->
+                <div class="col-lg-8">
+                    <div class="glass-card mb-4">
+                        <!-- CABECERA DEL GRÁFICO CON SWITCH -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted-custom small fw-bold" style="letter-spacing: 1px;">ANÁLISIS DE
+                                CICLO</span>
+
+                            <div class="btn-group p-1"
+                                style="background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                                <button id="btn-pv" class="btn btn-sm active-apple"
+                                    onclick="cambiarVista('PV')">P-V</button>
+                                <button id="btn-ts" class="btn btn-sm text-white" style="font-size: 0.7rem;"
+                                    onclick="cambiarVista('TS')">T-s</button>
+                            </div>
+                        </div>
+
+                        <!-- TU CANVAS CON EL ID CORRECTO -->
+                        <div style="height: 350px;">
+                            <canvas id="carnotChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="glass-card h-100 d-flex flex-column align-items-center justify-content-center">
+                                <h6 style="color: var(--accent-primary);">Simulador Dinámico</h6>
+                                <div class="engine-container">
+                                    <div class="cylinder">
+                                        <div class="gas"></div>
+                                        <div class="piston">
+                                            <div class="rod"></div>
+                                        </div>
+                                    </div>
+                                    <div class="phase-label"></div>
+                                </div>
+                                <div id="efficiencyBox" class="mt-3 text-center d-none">
+                                    <span class="small text-muted-custom">η Carnot Máx:</span>
+                                    <h5 id="etaText" class="mb-0 dynamic-title">--</h5>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-8">
+                            <div class="glass-card h-100">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 style="color: var(--accent-primary); margin: 0;">Matriz Termodinámica</h6>
+                                    <!-- NUEVO BOTÓN EXPORTAR CSV -->
+                                    <button onclick="exportarCSV()" class="btn-export">Exportar CSV</button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-borderless table-glass text-center align-middle"
+                                        id="telemetryTable">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-start">Proceso</th>
+                                                <th>Trabajo (W)</th>
+                                                <th>Calor (Q)</th>
+                                                <th>Entropía (ΔS)</th>
+                                                <th style="color: #60a5fa;">Energía Interna (ΔU)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tableBody">
+                                            <tr>
+                                                <td colspan="4" class="text-muted-custom small py-4">Presiona
+                                                    "Analizar".
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- SIDEBAR (MENÚ LATERAL) -->
+    <div class="offcanvas offcanvas-start glass-card" tabindex="-1" id="sidebarMenu"
+        style="width: 300px; border-right: 1px solid var(--card-border);">
+        <div class="offcanvas-header">
+            <h5 class="dynamic-title mb-0">MNDR Explorer</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item bg-transparent text-white border-secondary py-3" style="cursor:pointer;"
+                    onclick="abrirSeccion('Simulador')"> Simulador de Carnot</li>
+                <li class="list-group-item bg-transparent text-white border-secondary py-3" style="cursor:pointer;"
+                    onclick="abrirSeccion('Ejercicios')"> Eficiencia Termica</li>
+                <li class="list-group-item bg-transparent text-white border-secondary py-3" style="cursor:pointer;"
+                    onclick="abrirSeccion('Ejercicio2')"> Simulador P-V</li>
+                <li class="list-group-item bg-transparent text-white border-secondary py-3" style="cursor:pointer;"
+                    onclick="abrirSeccion('Ejercicio3')"> Balance de Energía</li>
+            </ul>
+        </div>
+    </div>
+    <!-- SECCIÓN EJERCICIO 1 -->
+    <div id="seccion-ejercicios" style="display: none;">
+        <div class="container py-5">
+            <div class="text-center mb-5">
+                <h2 class="dynamic-title">Eficiencia Térmica</h2>
+                <p class="text-muted-custom fw-bold">BDAG Team</p>
+            </div>
+
+            <div class="glass-card">
+                <div class="row g-3">
+                    <!-- Entrada Qh -->
+                    <div class="col-md-4">
+                        <label class="small text-muted-custom">Calor Fuente (Q<sub>h</sub>)</label>
+                        <div class="input-group">
+                            <input type="number" id="ex-input-qh" class="form-control" placeholder="500"
+                                oninput="calcularEjercicio()">
+                            <select id="unit-qh" class="form-select border-start-0" style="max-width: 80px;"
+                                onchange="calcularEjercicio()">
+                                <option value="kJ">kJ</option>
+                                <option value="J">J</option>
+                                <option value="BTU">BTU</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Entrada Th -->
+                    <div class="col-md-4">
+                        <label class="small text-muted-custom">Temp. Fuente (T<sub>h</sub>)</label>
+                        <div class="input-group">
+                            <input type="number" id="ex-input-th" class="form-control" placeholder="652"
+                                oninput="calcularEjercicio()">
+                            <select id="unit-th" class="form-select border-start-0" style="max-width: 80px;"
+                                onchange="calcularEjercicio()">
+                                <option value="C">°C</option>
+                                <option value="K">K</option>
+                                <option value="F">°F</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Entrada Tc -->
+                    <div class="col-md-4">
+                        <label class="small text-muted-custom">Temp. Sumidero (T<sub>c</sub>)</label>
+                        <div class="input-group">
+                            <input type="number" id="ex-input-tc" class="form-control" placeholder="30"
+                                oninput="calcularEjercicio()">
+                            <select id="unit-tc" class="form-select border-start-0" style="max-width: 80px;"
+                                onchange="calcularEjercicio()">
+                                <option value="C">°C</option>
+                                <option value="K">K</option>
+                                <option value="F">°F</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5 p-4 rounded"
+                    style="background: rgba(168, 85, 247, 0.05); border: 1px solid var(--accent-glow);">
+                    <div class="row text-center">
+                        <div class="col-md-4 border-end border-secondary border-opacity-25">
+                            <span class="small text-muted-custom">Eficiencia (&eta;<sub>ter</sub>)</span>
+                            <h4 id="ex-res-eta" class="dynamic-title mt-2">--</h4>
+                        </div>
+                        <div class="col-md-4 border-end border-secondary border-opacity-25">
+                            <span class="small text-muted-custom">Calor Rechazado (Q<sub>c</sub>)</span>
+                            <h4 id="ex-res-qc" class="text-info mt-2">--</h4>
+                        </div>
+                        <div class="col-md-4">
+                            <span class="small text-muted-custom">Trabajo Neto (W)</span>
+                            <h4 id="ex-res-w" class="text-success mt-2">--</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- SECCIÓN EJERCICIO 2 -->
+    <div id="seccion-ejercicio2" style="display: none;">
+        <div class="container py-5">
+            <div class="text-center mb-5">
+                <h2 class="dynamic-title">Trayectoria P-V Dinámica</h2>
+                <p class="text-muted-custom fw-bold">BDAG Team</p>
+            </div>
+
+            <div class="glass-card">
+                <div class="row g-3 mb-4 align-items-center">
+                    <div class="col-md-7">
+                        <h6 style="color: var(--accent-primary); margin: 0;">Configuración de la Trayectoria</h6>
+                    </div>
+                    <div class="col-md-5">
+                        <select id="ex2-tipo-proceso"
+                            class="form-select form-select-sm border-primary bg-dark text-white"
+                            onchange="resolverEjercicio2()">
+                            <option value="isotermico">Expansión Isotérmica (T constante)</option>
+                            <option value="adiabatico">Expansión Adiabática (Reversible)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <!-- P1 -->
+                    <div class="col-md-4">
+                        <label class="small text-muted-custom">Presión Inicial (P<sub>1</sub>)</label>
+                        <div class="input-group">
+                            <input type="number" id="ex2-p1" class="form-control" placeholder="1000"
+                                oninput="resolverEjercicio2()">
+                            <select id="u-ex2-p1" class="form-select border-start-0" style="max-width: 85px;"
+                                onchange="resolverEjercicio2()">
+                                <option value="kPa">kPa</option>
+                                <option value="atm">atm</option>
+                                <option value="bar">bar</option>
+                                <option value="Pa">Pa</option>
+                                <option value="PSI">PSI</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- V1 -->
+                    <div class="col-md-4">
+                        <label class="small text-muted-custom">Volumen Inicial (V<sub>1</sub>)</label>
+                        <div class="input-group">
+                            <input type="number" id="ex2-v1" class="form-control" placeholder="0.02"
+                                oninput="resolverEjercicio2()">
+                            <select id="u-ex2-v1" class="form-select border-start-0" style="max-width: 85px;"
+                                onchange="resolverEjercicio2()">
+                                <option value="m3">m³</option>
+                                <option value="L">L</option>
+                                <option value="cm3">cm³</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Th -->
+                    <div class="col-md-4">
+                        <label class="small text-muted-custom">Temperatura Inicial (T<sub>h</sub>)</label>
+                        <div class="input-group">
+                            <input type="number" id="ex2-th" class="form-control" placeholder="600"
+                                oninput="resolverEjercicio2()">
+                            <select id="u-ex2-th" class="form-select border-start-0" style="max-width: 85px;"
+                                onchange="resolverEjercicio2()">
+                                <option value="K">K</option>
+                                <option value="C">°C</option>
+                                <option value="F">°F</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-2">
+                    <!-- V Objetivo -->
+                    <div class="col-md-6">
+                        <label class="small text-muted-custom">Volumen de Expansión (V<sub>objetivo</sub>)</label>
+                        <div class="input-group">
+                            <input type="number" id="ex2-v2" class="form-control" placeholder="0.04"
+                                oninput="resolverEjercicio2()">
+                            <select id="u-ex2-v2" class="form-select border-start-0" style="max-width: 85px;"
+                                onchange="resolverEjercicio2()">
+                                <option value="m3">m³</option>
+                                <option value="L">L</option>
+                                <option value="cm3">cm³</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Tc -->
+                    <div class="col-md-6">
+                        <label class="small text-muted-custom">Temp. Destino (T<sub>c</sub>) <small>(Solo
+                                Adiabático)</small></label>
+                        <div class="input-group">
+                            <input type="number" id="ex2-tc" class="form-control" placeholder="300"
+                                oninput="resolverEjercicio2()">
+                            <select id="u-ex2-tc" class="form-select border-start-0" style="max-width: 85px;"
+                                onchange="resolverEjercicio2()">
+                                <option value="K">K</option>
+                                <option value="C">°C</option>
+                                <option value="F">°F</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RESULTADOS GRANDES -->
+                <div class="mt-5 p-4 rounded"
+                    style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2);">
+                    <div class="row text-center align-items-center">
+                        <div class="col-md-6 border-end border-secondary border-opacity-25">
+                            <span class="small text-muted-custom">Presión Resultante (P<sub>res</sub>)</span>
+                            <h3 id="ex2-res-p" class="dynamic-title mt-2">--</h3>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="small text-muted-custom">Volumen Final (V<sub>final</sub>)</span>
+                            <h3 id="ex2-res-v" class="text-info mt-2">--</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- SECCIÓN EJERCICIO 3 -->
+    <div id="seccion-ejercicio3" style="display: none;">
+        <div class="container py-5">
+            <div class="text-center mb-5">
+                <h2 class="dynamic-title">Análisis Energético por Etapa</h2>
+                <p class="text-muted-custom fw-bold">BDAG Team</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="glass-card h-100">
+                        <h6 class="mb-4" style="color: var(--accent-primary);">Parámetros del Sistema</h6>
+                        <div class="mb-3">
+                            <label class="small text-muted-custom">Sustancia (n)</label>
+                            <div class="input-group">
+                                <input type="number" id="ex3-n" class="form-control" value="1"
+                                    oninput="resolverEjercicio3()">
+                                <span class="input-group-text unit-addon">mol</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small text-muted-custom">Factor C<sub>v</sub> (R)</label>
+                            <div class="input-group">
+                                <input type="number" id="ex3-cv-factor" class="form-control" value="1.5" step="0.1"
+                                    oninput="resolverEjercicio3()">
+                                <span class="input-group-text unit-addon">R</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small text-muted-custom">Temp. Alta (T<sub>h</sub>)</label>
+                            <div class="input-group">
+                                <input type="number" id="ex3-th" class="form-control" value="600"
+                                    oninput="resolverEjercicio3()">
+                                <span class="input-group-text unit-addon">K</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small text-muted-custom">Temp. Baja (T<sub>c</sub>)</label>
+                            <div class="input-group">
+                                <input type="number" id="ex3-tc" class="form-control" value="300"
+                                    oninput="resolverEjercicio3()">
+                                <span class="input-group-text unit-addon">K</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-8">
+                    <div class="glass-card d-flex flex-column" style="height: 400px;">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted-custom small fw-bold" style="letter-spacing: 1px;">VISUALIZACIÓN DE
+                                TELEMETRÍA</span>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" id="btn-tab-barras" class="btn btn-outline-purple active"
+                                    onclick="cambiarTabGrafico('barras')">Balance Energético</button>
+                                <button type="button" id="btn-tab-carnot" class="btn btn-outline-purple"
+                                    onclick="cambiarTabGrafico('carnot')">Diagrama P-V Carnot</button>
+                            </div>
+                        </div>
+                        <div style="flex-grow: 1; height: 280px; position: relative;">
+                            <canvas id="energyBalanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive mt-5">
+                <table class="table table-glass text-center align-middle">
+                    <thead>
+                        <tr>
+                            <th class="text-start">Etapa del Ciclo</th>
+                            <th>Calor (Q)</th>
+                            <th>Trabajo (W)</th>
+                            <th>Energía (&Delta;U)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ex3-tabla-body">
+                    </tbody>
+                    <tfoot id="ex3-tabla-foot" class="fw-bold" style="border-top: 2px solid var(--accent-primary);">
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let myChart; // Agrégala al inicio de todo tu script si no está ahí
+        let vistaActual = 'PV'; // Nueva variable de estado
+        let energyChart; // Variable global para el gráfico de balance energético de la sección 3
+        let tabGraficoActivo = 'barras'; // Controla si se muestra el gráfico de barras o el P-V de Carnot en la sección 3
+
+        function toggleTheme() {
+            // Easter Egg / Defensa: Terminal Retro no tiene modo claro
+            if (document.body.getAttribute('data-theme') === 'retro') {
+                mostrarAlerta('Acceso Denegado', 'Los monitores de fósforo verde no soportan fotones claros.', 'warning');
+                return;
+            }
+            document.body.classList.toggle('light-mode');
+            document.getElementById('themeLabel').innerText = document.body.classList.contains('light-mode') ? 'LIGHT' : 'DARK';
+            setTimeout(intentarAnalisis, 50);
+        }
+        function calcularEjercicio() {
+            // 1. Captura de datos y selectores de unidad
+            const qhRaw = parseFloat(document.getElementById('ex-input-qh').value);
+            const thRaw = parseFloat(document.getElementById('ex-input-th').value);
+            const tcRaw = parseFloat(document.getElementById('ex-input-tc').value);
+
+            const uQh = document.getElementById('unit-qh').value;
+            const uTh = document.getElementById('unit-th').value;
+            const uTc = document.getElementById('unit-tc').value;
+
+            const resEta = document.getElementById('ex-res-eta');
+            const resQc = document.getElementById('ex-res-qc');
+            const resW = document.getElementById('ex-res-w');
+
+            // 2. Funciones de conversión a estándar SI (K y kJ)
+            const toKelvin = (v, u) => {
+                if (u === 'C') return v + 273.15;
+                if (u === 'F') return (v - 32) * 5 / 9 + 273.15;
+                return v; // Ya es Kelvin
+            };
+
+            const tokJ = (v, u) => {
+                if (u === 'J') return v / 1000;
+                if (u === 'BTU') return v * 1.05506;
+                return v; // Ya es kJ
+            };
+
+            // 3. BLOQUE DE CÁLCULO JERÁRQUICO[cite: 1, 2]
+            if (!isNaN(thRaw) && !isNaN(tcRaw)) {
+                const thK = toKelvin(thRaw, uTh);
+                const tcK = toKelvin(tcRaw, uTc);
+
+                // Validación física: Th debe ser mayor a Tc
+                if (thK > tcK && tcK > 0) {
+                    const eta = 1 - (tcK / thK);
+                    resEta.innerText = (eta * 100).toFixed(2) + "%";
+
+                    // REACCIÓN AL CALOR FUENTE: Solo calcula si el input existe y no es nulo
+                    if (!isNaN(qhRaw)) {
+                        const qhKJ = tokJ(qhRaw, uQh);
+                        const qcKJ = qhKJ * (tcK / thK); // Relación Q_c/Q_h = T_c/T_h
+                        const wKJ = qhKJ - qcKJ;         // Conservación: W = Q_h - Q_c
+
+                        resQc.innerText = qcKJ.toFixed(2) + " kJ";
+                        resW.innerText = wKJ.toFixed(2) + " kJ";
+                    } else {
+                        // LIMPIEZA AUTOMÁTICA: Si borras Qh, estos se limpian[cite: 2]
+                        resQc.innerText = "--";
+                        resW.innerText = "--";
+                    }
+                } else {
+                    resEta.innerText = "Inviable";
+                    resQc.innerText = "--";
+                    resW.innerText = "--";
+                }
+            } else {
+                // Reset total si faltan temperaturas[cite: 2]
+                resEta.innerText = "--";
+                resQc.innerText = "--";
+                resW.innerText = "--";
+            }
+        }
+        // FUNCIONES DE CONVERSIÓN DE INGENIERÍA
+        const aK = (v, u) => {
+            if (u === 'C') return v + 273.15;
+            if (u === 'F') return (v - 32) * 5 / 9 + 273.15;
+            return v;
+        };
+
+        const akPa = (v, u) => {
+            const factores = { 'atm': 101.325, 'bar': 100, 'Pa': 0.001, 'PSI': 6.89476, 'kPa': 1 };
+            return v * (factores[u] || 1);
+        };
+
+        const am3 = (v, u) => {
+            const factores = { 'L': 0.001, 'cm3': 0.000001, 'm3': 1 };
+            return v * (factores[u] || 1);
+        };
+
+        function resolverEjercicio2() {
+            // 1. Capturar valores y sus unidades
+            const p1Raw = parseFloat(document.getElementById('ex2-p1').value);
+            const v1Raw = parseFloat(document.getElementById('ex2-v1').value);
+            const thRaw = parseFloat(document.getElementById('ex2-th').value);
+            const v2Raw = parseFloat(document.getElementById('ex2-v2').value);
+            const tcRaw = parseFloat(document.getElementById('ex2-tc').value);
+
+            const uP1 = document.getElementById('u-ex2-p1').value;
+            const uV1 = document.getElementById('u-ex2-v1').value;
+            const uTh = document.getElementById('u-ex2-th').value;
+            const uV2 = document.getElementById('u-ex2-v2').value;
+            const uTc = document.getElementById('u-ex2-tc').value;
+            const tipo = document.getElementById('ex2-tipo-proceso').value;
+
+            const resP = document.getElementById('ex2-res-p');
+            const resV = document.getElementById('ex2-res-v');
+
+            // 2. Normalizar a SI (kPa, m3, K) para el cálculo
+            const p1 = akPa(p1Raw, uP1);
+            const v1 = am3(v1Raw, uV1);
+            const v2_obj = am3(v2Raw, uV2);
+            const th = aK(thRaw, uTh);
+            const tc = aK(tcRaw, uTc);
+
+            const k = 1.4; // Índice adiabático para aire
+
+            if (isNaN(p1) || isNaN(v1)) {
+                resP.innerText = "--";
+                resV.innerText = "--";
+                return;
+            }
+
+            if (tipo === 'isotermico') {
+                // Expansión Isotérmica: P1*V1 = P2*V2
+                if (!isNaN(v2_obj) && v2_obj > 0) {
+                    const p2 = p1 * (v1 / v2_obj);
+                    resP.innerText = p2.toFixed(2) + " kPa";
+                    resV.innerText = (v2_obj).toFixed(4) + " m³";
+                } else {
+                    resP.innerText = "--";
+                    resV.innerText = "--";
+                }
+            }
+            else if (tipo === 'adiabatico') {
+                // Expansión Adiabática
+                if (!isNaN(th) && !isNaN(tc) && tc > 0) {
+                    // Relación T-V para hallar V3
+                    const v3 = v1 * Math.pow((th / tc), (1 / (k - 1)));
+                    const p3 = p1 * Math.pow((v1 / v3), k);
+                    resP.innerText = p3.toFixed(2) + " kPa";
+                    resV.innerText = v3.toFixed(4) + " m³";
+                }
+                else if (!isNaN(v2_obj) && v2_obj > 0) {
+                    // Relación P-V directa
+                    const p2_adiab = p1 * Math.pow((v1 / v2_obj), k);
+                    resP.innerText = p2_adiab.toFixed(2) + " kPa";
+                    resV.innerText = v2_obj.toFixed(4) + " m³";
+                } else {
+                    resP.innerText = "--";
+                    resV.innerText = "--";
+                }
+            }
+        }
+        function resolverEjercicio3() {
+            // 1. Datos base
+            const n = parseFloat(document.getElementById('ex3-n').value);
+            const cvFactor = parseFloat(document.getElementById('ex3-cv-factor').value);
+            const th = parseFloat(document.getElementById('ex3-th').value);
+            const tc = parseFloat(document.getElementById('ex3-tc').value);
+            const R = 8.314;
+            const cv = cvFactor * R;
+
+            // Supongamos Q12 del ejercicio como base de escala (3458 J)
+            const q12 = 3458;
+
+            // 2. Cálculos por Etapa
+            // Etapa 1-2 (Isotérmica): ΔU = 0, Q = W
+            const w12 = q12;
+            const du12 = 0;
+
+            // Etapa 2-3 (Adiabática): Q = 0, W = -ΔU
+            const q23 = 0;
+            const du23 = n * cv * (tc - th);
+            const w23 = -du23;
+
+            // Etapa 3-4 (Isotérmica): ΔU = 0, Q = W = -Q12 * (Tc/Th)
+            const q34 = -q12 * (tc / th);
+            const w34 = q34;
+            const du34 = 0;
+
+            // Etapa 4-1 (Adiabática): Q = 0, W = -ΔU
+            const q41 = 0;
+            const du41 = n * cv * (th - tc);
+            const w41 = -du41;
+
+            // 3. Totales
+            const qTot = q12 + q23 + q34 + q41;
+            const wTot = w12 + w23 + w34 + w41;
+            const duTot = du12 + du23 + du34 + du41;
+
+            // 4. Renderizar Tabla
+            const body = document.getElementById('ex3-tabla-body');
+            body.innerHTML = `
+            <tr><td class="text-start small">1-2 Exp. Isotérmica</td><td>${q12} J</td><td>${w12} J</td><td>0 J</td></tr>
+            <tr><td class="text-start small">2-3 Exp. Adiabática</td><td>0 J</td><td>${w23.toFixed(0)} J</td><td>${du23.toFixed(0)} J</td></tr>
+            <tr><td class="text-start small">3-4 Com. Isotérmica</td><td>${q34.toFixed(0)} J</td><td>${w34.toFixed(0)} J</td><td>0 J</td></tr>
+            <tr><td class="text-start small">4-1 Com. Adiabática</td><td>0 J</td><td>${w41.toFixed(0)} J</td><td>${du41.toFixed(0)} J</td></tr>
+            `;
+
+            document.getElementById('ex3-tabla-foot').innerHTML = `
+            <tr><td class="text-start">Ciclo Completo</td><td>${qTot.toFixed(0)} J</td><td>${wTot.toFixed(0)} J</td><td>${duTot.toFixed(0)} J</td></tr>
+            `;
+
+            // 5. Renderizar Gráfico según la pestaña activa
+            if (tabGraficoActivo === 'barras') {
+                renderEnergyChart(
+                    [q12, q23, q34, q41],            // Datos de Calor (Q)
+                    [w12, w23, w34, w41],            // Datos de Trabajo (W)
+                    [du12, du23, du34, du41]         // Datos de Energía Interna (ΔU)
+                );
+            } else {
+                // Graficar Ciclo de Carnot real con deducción matemática de variables
+                renderCarnotCycleChart(n, th, tc, cvFactor);
+            }
+        }
+
+        // --- PARTÍCULAS REACTIVAS ---
+        const canvas = document.getElementById('particleCanvas'); const ctx = canvas.getContext('2d'); let particles = [];
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
+        class Particle {
+            constructor() { this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height; this.size = Math.random() * 2.5; this.speedX = Math.random() * 0.4 - 0.2; this.speedY = Math.random() * 0.4 - 0.2; }
+            update() { this.x += this.speedX; this.y += this.speedY; if (this.x > canvas.width) this.x = 0; if (this.x < 0) this.x = canvas.width; if (this.y > canvas.height) this.y = 0; if (this.y < 0) this.y = canvas.height; }
+            draw() {
+                ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--particle-fill').trim() || 'rgba(168, 85, 247, 0.4)';
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+        for (let i = 0; i < 80; i++) particles.push(new Particle());
+        function animate() { ctx.clearRect(0, 0, canvas.width, canvas.height); particles.forEach(p => { p.update(); p.draw(); }); requestAnimationFrame(animate); } animate();
+
+        let alertTimeout;
+        function mostrarAlerta(titulo, mensaje, tipo = 'danger') {
+            const alertSys = document.getElementById('alertSystem');
+            document.getElementById('alertTitle').innerText = titulo; document.getElementById('alertMessage').innerText = mensaje;
+            document.getElementById('alertContent').className = 'alert-glass alert-' + tipo + '-custom';
+            document.getElementById('alertIcon').innerText = tipo === 'danger' ? '⛔' : (tipo === 'info' ? '💾' : '⚠️');
+            alertSys.classList.add('show'); clearTimeout(alertTimeout); alertTimeout = setTimeout(() => { alertSys.classList.remove('show'); }, 4000);
+        }
+
+        // --- GENERADOR ESTADOS ---
+        const defaultData = [{ v: 1000, p: 9 }, { v: 2200, p: 4.1 }, { v: 4000, p: 1.5 }, { v: 1800, p: 3.3 }];
+        const grid = document.getElementById('inputs-grid');
+        for (let i = 1; i <= 4; i++) {
+            grid.innerHTML += `
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="badge" style="background: var(--input-bg); color: var(--accent-primary); border: 1px solid var(--card-border);">Estado ${i}</span>
+                    <span id="temp${i}" style="font-size: 0.8rem; font-weight: 600; color: var(--text-info);"></span>
+                </div>
+                <div class="row g-2">
+                    <div class="col-6"><input type="number" id="v${i}" class="form-control" value="${defaultData[i - 1].v}" min="-10" step="0.5"></div>
+                    <div class="col-6"><input type="number" id="p${i}" class="form-control" value="${defaultData[i - 1].p}" min="-10" step="0.5"></div>
+                </div>
+            </div>`;
+        }
+
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    let step = parseFloat(this.getAttribute('step')) || 1;
+                    if (this.id === 'gasAmount') step = 0.1;
+                    let val = parseFloat(this.value) || 0;
+                    if (e.key === 'ArrowUp') val += step;
+                    if (e.key === 'ArrowDown') val -= step;
+                    this.value = (this.id === 'gasAmount') ? val.toFixed(1) : val.toFixed(2);
+                    intentarAnalisis();
+                }
+            });
+        });
+
+        let currentUnitV = 'cm3'; let currentUnitP = 'atm';
+        const convV = { 'cm3': { 'cm3': 1, 'L': 0.001, 'm3': 0.000001 }, 'L': { 'cm3': 1000, 'L': 1, 'm3': 0.001 }, 'm3': { 'cm3': 1000000, 'L': 1000, 'm3': 1 } };
+        const convP = {
+            'atm': { 'atm': 1, 'kPa': 101.325, 'Pa': 101325, 'bar': 1.01325, 'psi': 14.6959 },
+            'kPa': { 'atm': 1 / 101.325, 'kPa': 1, 'Pa': 1000, 'bar': 0.01, 'psi': 0.145038 },
+            'Pa': { 'atm': 1 / 101325, 'kPa': 0.001, 'Pa': 1, 'bar': 0.00001, 'psi': 0.000145038 },
+            'bar': { 'atm': 0.986923, 'kPa': 100, 'Pa': 100000, 'bar': 1, 'psi': 14.5038 },
+            'psi': { 'atm': 0.068046, 'kPa': 6.89476, 'Pa': 6894.76, 'bar': 0.0689476, 'psi': 1 }
+        };
+        document.getElementById('unitV').onchange = function () { let factor = convV[currentUnitV][this.value]; for (let i = 1; i <= 4; i++) { let el = document.getElementById(`v${i}`); if (el.value) el.value = (parseFloat(el.value) * factor).toFixed(this.value === 'm3' ? 4 : 1); } let limV = document.getElementById('limitV'); if (limV.value) limV.value = (parseFloat(limV.value) * factor).toFixed(this.value === 'm3' ? 4 : 1); currentUnitV = this.value; intentarAnalisis(); };
+        document.getElementById('unitP').onchange = function () {
+            let factor = convP[currentUnitP][this.value];
+            for (let i = 1; i <= 4; i++) {
+                let el = document.getElementById(`p${i}`);
+                if (el.value) {
+                    el.value = (parseFloat(el.value) * factor).toFixed((this.value === 'Pa') ? 0 : (this.value === 'kPa' ? 1 : 2));
+                }
+            }
+            let limP = document.getElementById('limitP');
+            if (limP.value) {
+                limP.value = (parseFloat(limP.value) * factor).toFixed((this.value === 'Pa') ? 0 : (this.value === 'kPa' ? 1 : 2));
+            }
+            currentUnitP = this.value;
+            intentarAnalisis();
+        };
+        const factorP = { 'atm': 101325, 'kPa': 1000, 'Pa': 1, 'bar': 100000, 'psi': 6894.76 };
+        const factorV = { 'cm3': 0.000001, 'L': 0.001, 'm3': 1 };
+
+
+        function intentarAnalisis() {
+            let maxV_detectado = 0; let maxP_detectado = 0;
+            let n = parseFloat(document.getElementById('gasAmount').value);
+            if (isNaN(n) || n <= 0) { mostrarAlerta('Violación de Realidad', 'La materia no puede ser cero o negativa.', 'danger'); return; }
+
+            for (let i = 1; i <= 4; i++) {
+                let vVal = parseFloat(document.getElementById(`v${i}`).value);
+                let pVal = parseFloat(document.getElementById(`p${i}`).value);
+
+                if (vVal <= 0 || pVal <= 0) {
+                    mostrarAlerta('Anomalía Cuántica', `¡No tan rápido cerebrito! El Estado ${i} tiene presión o volumen en cero o negativo. Eso no es posible en nuestra realidad.`, 'danger');
+                    return;
+                }
+                if (vVal > maxV_detectado) maxV_detectado = vVal;
+                if (pVal > maxP_detectado) maxP_detectado = pVal;
+            }
+
+            let uV = parseFloat(document.getElementById('limitV').value) || (maxV_detectado * 1.2);
+            let uP = parseFloat(document.getElementById('limitP').value) || (maxP_detectado * 1.2);
+            let renderLimitV = uV; let renderLimitP = uP; let scaleAdjusted = false;
+
+            if (maxV_detectado > uV) { renderLimitV = maxV_detectado * 1.2; scaleAdjusted = true; }
+            if (maxP_detectado > uP) { renderLimitP = maxP_detectado * 1.2; scaleAdjusted = true; }
+            if (scaleAdjusted) { mostrarAlerta('Auto-Expansión', 'Gráfica auto-escalada para prevenir colapso visual.', 'warning'); }
+
+            ejecutarCoreAnalisis(renderLimitV, renderLimitP);
+        }
+
+        function ejecutarCoreAnalisis(renderLimitV, renderLimitP) {
+            let ptsVisuales = [];
+            let ptsSI = [];
+            const uV = document.getElementById('unitV').value;
+            const uP = document.getElementById('unitP').value;
+            const n = parseFloat(document.getElementById('gasAmount').value);
+            const R = 8.31446;
+            const gamma = parseFloat(document.getElementById('gammaType').value);
+
+            // Cv basado en gamma: Cv = R / (gamma - 1)
+            const Cv = R / (gamma - 1);
+            let temperaturas = [];
+
+            // 1. Captura y validación de estados para evitar colapsos
+            for (let i = 1; i <= 4; i++) {
+                let vVal = parseFloat(document.getElementById(`v${i}`).value);
+                let pVal = parseFloat(document.getElementById(`p${i}`).value);
+
+                // Si el usuario borra un campo o carga la página de cero, frenamos pacíficamente
+                if (isNaN(vVal) || isNaN(pVal)) {
+                    return;
+                }
+
+                ptsVisuales.push({ x: vVal, y: pVal });
+
+                let pSI = pVal * factorP[uP];
+                let vSI = vVal * factorV[uV];
+                ptsSI.push({ x: vSI, y: pSI });
+
+                let tempK = (pSI * vSI) / (n * R);
+                temperaturas.push(tempK);
+                document.getElementById(`temp${i}`).innerText = `T = ${tempK.toFixed(1)} K`;
+            }
+
+            // Punto de cierre para el loop de cálculo
+            ptsSI.push(ptsSI[0]);
+            temperaturas.push(temperaturas[0]);
+
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            const nombres = ["1→2 (Iso T)", "2→3 (Adia)", "3→4 (Iso T)", "4→1 (Adia)"];
+
+            let trabajoNeto = 0;
+            let calorNeto = 0;
+
+            // 2. Motor de Cálculo Purista por Integrales
+            for (let i = 0; i < 4; i++) {
+                let W, Q, dS;
+                let T_actual = temperaturas[i];
+                let T_siguiente = temperaturas[i + 1];
+
+                if (i % 2 === 0) { // Procesos Isotérmicos (1-2 y 3-4)
+                    W = n * R * T_actual * Math.log(ptsSI[i + 1].x / ptsSI[i].x);
+                    Q = W;
+                    dS = Q / T_actual;
+                } else { // Procesos Adiabáticos (2-3 y 4-1)
+                    W = n * Cv * (T_actual - T_siguiente);
+                    Q = 0;
+                    dS = 0;
+                }
+
+                trabajoNeto += W;
+                calorNeto += Q;
+
+                let wColor = W > 0 ? '#4ade80' : '#f87171';
+                let qColor = Q > 0 ? '#60a5fa' : (Q < 0 ? '#f87171' : '#9ca3af');
+
+                // Calculamos la variación de energía interna en kJ
+                let dU = (Q - W) / 1000;
+                let duColor = dU === 0 ? '#9ca3af' : '#60a5fa';
+
+                tableBody.innerHTML += `<tr>
+                    <td class="text-start" style="color: var(--text-main);">${nombres[i]}</td>
+                    <td style="color: ${wColor};">${(W / 1000).toFixed(2)} kJ</td>
+                    <td style="color: ${qColor};">${(Q / 1000).toFixed(2)} kJ</td>
+                    <td style="color: var(--text-muted);">${dS.toFixed(2)} J/K</td>
+                    <td style="color: ${duColor};">${dU.toFixed(2)} kJ</td>
+                </tr>`;
+            }
+
+            // 3. UNIFICACIÓN DE FORMATO DEL "CICLO NET" (Fuerza cumplimiento visual de la 1ra Ley)
+            let wNetMostrar = (trabajoNeto / 1000).toFixed(2);
+
+            tableBody.innerHTML += `<tr style="border-top: 2px solid var(--accent-primary);">
+                <td><strong>Ciclo Net</strong></td>
+                <td colspan="2" class="text-center" style="color: var(--accent-primary);">
+                    W_net ≈ ${wNetMostrar} kJ | Q_net ≈ ${wNetMostrar} kJ
+                </td>
+                <td style="color: var(--accent-primary); font-weight: bold;">ΔS ≈ 0</td>
+                <td style="color: var(--accent-primary); font-weight: bold;">ΔU ≈ 0</td>
+            </tr>`;
+
+            // 4. Lógica de Eficiencia de Carnot con Validación de Seguridad para la UI
+            let TH = Math.max(...temperaturas);
+            let TC = Math.min(...temperaturas);
+            let eficienciaCarnot = (1 - (TC / TH)) * 100;
+
+            // Actualizamos el etaText clásico (el de tu HTML original)
+            const etaTextEl = document.getElementById('etaText');
+            if (etaTextEl) {
+                etaTextEl.innerText = `${eficienciaCarnot.toFixed(2)}%`;
+            }
+
+            // Si tu HTML tiene la nueva etiqueta etaRealText (Eficiencia Dual), la actualiza
+            const etaRealTextEl = document.getElementById('etaRealText');
+            if (etaRealTextEl) {
+                let Q_h = n * R * temperaturas[0] * Math.log(ptsSI[1].x / ptsSI[0].x);
+                let eficienciaReal = Q_h !== 0 ? (trabajoNeto / Q_h) * 100 : 0;
+                etaRealTextEl.innerText = `${eficienciaReal.toFixed(2)}%`;
+            }
+
+            const efficiencyBox = document.getElementById('efficiencyBox');
+            if (efficiencyBox) {
+                efficiencyBox.classList.remove('d-none');
+            }
+
+            // 5. Decisión de renderizado según la Vista Actual (Persistencia de pestaña)
+            if (vistaActual === 'TS') {
+                const v1SI = ptsSI[0].x;
+                const v2SI = ptsSI[1].x;
+                const s1 = 10;
+                const ds = n * R * Math.log(v2SI / v1SI);
+                const s2 = s1 + ds;
+
+                const datosTS = [
+                    { x: s1, y: TH }, { x: s2, y: TH },
+                    { x: s2, y: TC }, { x: s1, y: TC }, { x: s1, y: TH }
+                ];
+
+                renderChart(datosTS, 'J/K', 'K', s2 * 1.2, TH * 1.2);
+            } else {
+                ptsVisuales.push(ptsVisuales[0]);
+                renderChart(ptsVisuales, uV, uP, renderLimitV, renderLimitP);
+            }
+        }
+
+        function renderChart(data, uV, uP, renderLimitV, renderLimitP) {
+            const ctx = document.getElementById('carnotChart').getContext('2d');
+            const etiV = { 'cm3': 'Volumen (cm³)', 'L': 'Volumen (L)', 'm3': 'Volumen (m³)', 'J/K': 'Entropía (J/K)' };
+            const etiP = { 'atm': 'Presión (atm)', 'Pa': 'Presión (Pa)', 'bar': 'Presión (bar)', 'psi': 'Presión (PSI)', 'K': 'Temperatura (K)' };
+
+            let gridColor = getComputedStyle(document.body).getPropertyValue('--chart-grid').trim();
+            let textColor = getComputedStyle(document.body).getPropertyValue('--text-muted').trim();
+            let primaryColor = getComputedStyle(document.body).getPropertyValue('--accent-primary').trim();
+            let fontFamily = getComputedStyle(document.body).getPropertyValue('--font-family-main').trim();
+            let isRetro = document.body.getAttribute('data-theme') === 'retro';
+
+            if (myChart) myChart.destroy();
+            Chart.defaults.color = textColor; Chart.defaults.font.family = fontFamily;
+
+            myChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        data: data,
+                        showLine: true,
+                        borderColor: primaryColor,
+                        backgroundColor: isRetro ? 'transparent' : 'rgba(168, 85, 247, 0.15)',
+                        borderWidth: isRetro ? 2 : 3,
+                        borderDash: isRetro ? [5, 5] : [],
+                        tension: isRetro ? 0 : 0.35,
+                        pointBackgroundColor: isRetro ? '#000' : '#ffffff',
+                        pointBorderColor: primaryColor,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    // INTERACCIÓN EN VIVO: Aparece al acercarse al punto sin clics
+                    interaction: {
+                        mode: 'nearest',
+                        intersect: false,
+                        axis: 'xy'
+                    },
+                    scales: {
+                        x: { max: renderLimitV, min: 0, grid: { color: gridColor }, title: { display: true, text: etiV[uV] } },
+                        y: { max: renderLimitP, min: 0, grid: { color: gridColor }, title: { display: true, text: etiP[uP] } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            // Filtramos el punto de cierre (índice 4) para evitar redundancia
+                            filter: function (ti) { return ti.dataIndex !== 4; },
+                            enabled: true,
+                            backgroundColor: 'rgba(26, 11, 46, 0.95)', // Estilo Glassmorphism oscuro
+                            titleColor: '#a855f7',
+                            titleFont: { weight: 'bold', size: 14 },
+                            bodyColor: '#f5f5f7',
+                            borderColor: 'rgba(168, 85, 247, 0.4)',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                // Título dinámico: Muestra el número de Estado
+                                title: function (context) {
+                                    return `Estado ${context[0].dataIndex + 1}`;
+                                },
+                                // Contenido: Detecta automáticamente las unidades según la vista
+                                label: function (context) {
+                                    const isTS = myChart.options.scales.x.title.text.includes('Entropía');
+                                    const unitX = isTS ? ' J/K' : ` ${uV}`;
+                                    const unitY = isTS ? ' K' : ` ${uP}`;
+                                    return [
+                                        `Eje X: ${context.parsed.x.toFixed(2)}${unitX}`,
+                                        `Eje Y: ${context.parsed.y.toFixed(2)}${unitY}`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- FUNCIÓN DE EXPORTACIÓN CSV ---
+        // --- FUNCIÓN DE EXPORTACIÓN CSV (CORREGIDA PARA EXCEL/UTF-8) ---
+        function exportarCSV() {
+            let table = document.getElementById("telemetryTable");
+            let rows = table.querySelectorAll("tr");
+            let csv = [];
+
+            // Agregar metadata al CSV
+            csv.push("TELEMETRIA CICLO DE CARNOT - BDAG Team");
+            csv.push(`Fecha: ${new Date().toLocaleString()}`);
+            csv.push(`Eficiencia Max: ${document.getElementById('etaText').innerText}`);
+            csv.push(""); // Linea en blanco
+
+            for (let i = 0; i < rows.length; i++) {
+                let row = [], cols = rows[i].querySelectorAll("td, th");
+                for (let j = 0; j < cols.length; j++)
+                    row.push('"' + cols[j].innerText.replace(/"/g, '""') + '"');
+                csv.push(row.join(","));
+            }
+
+            // INYECCIÓN DEL BOM (\uFEFF) PARA FORZAR UTF-8 EN EXCEL
+            let csvContent = "\uFEFF" + csv.join("\n");
+            let csvFile = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+
+            let downloadLink = document.createElement("a");
+            downloadLink.download = "Log_Termodinamico_BDAG_Team.csv";
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+
+            mostrarAlerta('Telemetría Exportada', 'Log_Termodinamico_BDAG_Team.csv ha sido descargado.', 'info');
+        }
+
+        function abrirSeccion(nombre) {
+            const menuEl = document.getElementById('sidebarMenu');
+            const instanciaMenu = bootstrap.Offcanvas.getInstance(menuEl) || new bootstrap.Offcanvas(menuEl);
+            instanciaMenu.hide();
+
+            const sim = document.getElementById('seccion-simulador');
+            const ej1 = document.getElementById('seccion-ejercicios');
+            const ej2 = document.getElementById('seccion-ejercicio2');
+            const ej3 = document.getElementById('seccion-ejercicio3');
+
+            if (sim) sim.style.display = 'none';
+            if (ej1) ej1.style.display = 'none';
+            if (ej2) ej2.style.display = 'none';
+            if (ej3) ej3.style.display = 'none';
+
+            if (nombre === 'Simulador') sim.style.display = 'block';
+            else if (nombre === 'Ejercicios') ej1.style.display = 'block';
+            else if (nombre === 'Ejercicio2') ej2.style.display = 'block';
+            else if (nombre === 'Ejercicio3') {
+                ej3.style.display = 'block';
+                resolverEjercicio3(); // Carga de datos y renderizado del gráfico de barras
+            }
+        }
+
+        function resolverInteligente(origen) {
+            // 1. Obtener temperaturas actuales del simulador[cite: 1]
+            const n = parseFloat(document.getElementById('gasAmount').value);
+            const R = 8.314;
+            // Calculamos Th y Tc basadas en los estados del simulador
+            const Th = (parseFloat(document.getElementById('p1').value) * factorP[document.getElementById('unitP').value] *
+                parseFloat(document.getElementById('v1').value) * factorV[document.getElementById('unitV').value]) / (n * R);
+            const Tc = (parseFloat(document.getElementById('p3').value) * factorP[document.getElementById('unitP').value] *
+                parseFloat(document.getElementById('v3').value) * factorV[document.getElementById('unitV').value]) / (n * R);
+
+            const eta = 1 - (Tc / Th); // Eficiencia teórica de Carnot[cite: 1]
+            document.getElementById('output-eta').innerText = (eta * 100).toFixed(2) + "%";
+
+            if (origen === 'qh') {
+                const qh = parseFloat(document.getElementById('input-qh').value);
+                if (!isNaN(qh)) {
+                    const qc = qh * (Tc / Th); // Relación de calores[cite: 1]
+                    const w = qh - qc; // Conservación de energía[cite: 1]
+                    document.getElementById('input-w').value = w.toFixed(2);
+                    document.getElementById('output-qc').innerText = qc.toFixed(2) + " kJ";
+                }
+            } else if (origen === 'w') {
+                const w = parseFloat(document.getElementById('input-w').value);
+                if (!isNaN(w)) {
+                    const qh = w / eta; // Despeje de eficiencia[cite: 1]
+                    const qc = qh - w;
+                    document.getElementById('input-qh').value = qh.toFixed(2);
+                    document.getElementById('output-qc').innerText = qc.toFixed(2) + " kJ";
+                }
+            }
+        }
+
+        function obtenerGradiente(ctx) {
+            const chartArea = ctx.chart.chartArea;
+            if (!chartArea) return null;
+
+            const gradient = ctx.chart.ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+            // Espectro Morado MNDR
+            gradient.addColorStop(0, 'rgba(147, 51, 234, 0.2)');   // Morado suave (base)
+            gradient.addColorStop(0.5, 'rgba(168, 85, 247, 0.4)'); // Púrpura medio
+            gradient.addColorStop(1, 'rgba(192, 38, 211, 0.6)');   // Magenta neón (tope)
+
+            return gradient;
+        }
+        function renderEnergyChart(calorData, trabajoData, energiaData) {
+            const ctx = document.getElementById('energyBalanceChart').getContext('2d');
+
+            let gridColor = getComputedStyle(document.body).getPropertyValue('--chart-grid').trim() || 'rgba(255, 255, 255, 0.05)';
+            let textColor = getComputedStyle(document.body).getPropertyValue('--text-muted').trim() || '#a1a1aa';
+            let fontFamily = getComputedStyle(document.body).getPropertyValue('--font-family-main').trim() || 'sans-serif';
+
+            // Si ya existe el gráfico, lo destruimos para poder redibujar los nuevos datos de forma limpia
+            if (energyChart) {
+                energyChart.destroy();
+            }
+
+            Chart.defaults.color = textColor;
+            Chart.defaults.font.family = fontFamily;
+
+            energyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['1→2 (Iso T)', '2→3 (Adia)', '3→4 (Iso T)', '4→1 (Adia)'],
+                    datasets: [
+                        {
+                            label: 'Calor (Q)',
+                            data: calorData.map(v => parseFloat(v.toFixed(0))),
+                            backgroundColor: 'rgba(96, 165, 250, 0.75)', // Azul
+                            borderColor: '#60a5fa',
+                            borderWidth: 1.5,
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Trabajo (W)',
+                            data: trabajoData.map(v => parseFloat(v.toFixed(0))),
+                            backgroundColor: 'rgba(74, 222, 128, 0.75)', // Verde
+                            borderColor: '#4ade80',
+                            borderWidth: 1.5,
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Energía Interna (ΔU)',
+                            data: energiaData.map(v => parseFloat(v.toFixed(0))),
+                            backgroundColor: 'rgba(168, 85, 247, 0.75)', // Morado MNDR
+                            borderColor: '#a855f7',
+                            borderWidth: 1.5,
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    scales: {
+                        x: {
+                            grid: { color: gridColor },
+                            ticks: { color: textColor }
+                        },
+                        y: {
+                            grid: { color: gridColor },
+                            ticks: { color: textColor },
+                            title: {
+                                display: true,
+                                text: 'Energía (Joules)',
+                                color: textColor
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { color: textColor }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(26, 11, 46, 0.95)',
+                            titleColor: '#a855f7',
+                            bodyColor: '#f5f5f7',
+                            borderColor: 'rgba(168, 85, 247, 0.3)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function (context) {
+                                    return ` ${context.dataset.label}: ${context.parsed.y} J`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Cambiar entre Pestaña de Barras y Diagrama P-V
+        function cambiarTabGrafico(tab) {
+            tabGraficoActivo = tab;
+            document.getElementById('btn-tab-barras').classList.toggle('active', tab === 'barras');
+            document.getElementById('btn-tab-carnot').classList.toggle('active', tab === 'carnot');
+            resolverEjercicio3(); // Re-calcula y dibuja la gráfica seleccionada
+        }
+
+        function renderCarnotCycleChart(n, Th, Tc, cvFactor) {
+            const ctx = document.getElementById('energyBalanceChart').getContext('2d');
+            let gridColor = getComputedStyle(document.body).getPropertyValue('--chart-grid').trim() || 'rgba(255, 255, 255, 0.05)';
+            let textColor = getComputedStyle(document.body).getPropertyValue('--text-muted').trim() || '#a1a1aa';
+            const R = 8.314;
+            const gamma = (cvFactor + 1) / cvFactor; // Cp/Cv
+
+            // === 1. CÁLCULO ESTRICTO DE PUNTOS DE ESTADO (Coordenadas P-V) ===
+            const V1 = 1.0; // Estado 1 (Punto de partida de escala)
+            const P1 = (n * R * Th) / V1;
+
+            // Estado 2 (Isoterma Alta): Usamos el Q12 real de 3458 J para expandir
+            const q12 = 3458;
+            const V2 = V1 * Math.exp(q12 / (n * R * Th));
+            const P2 = (n * R * Th) / V2;
+
+            // Estado 3 (Adiabática de expansión): Th * V2^(g-1) = Tc * V3^(g-1)
+            const V3 = V2 * Math.pow(Th / Tc, 1 / (gamma - 1));
+            const P3 = (n * R * Tc) / V3;
+
+            // Estado 4 (Adiabática de compresión de retorno al Estado 1): Tc * V4^(g-1) = Th * V1^(g-1)
+            const V4 = V1 * Math.pow(Th / Tc, 1 / (gamma - 1));
+            const P4 = (n * R * Tc) / V4;
+
+            // === 2. GENERACIÓN DE CURVAS TERMODINÁMICAS ORDENADAS ===
+            let points = [];
+            const steps = 20; // Más pasos = curvas más suaves
+
+            // Tramo 1 -> 2: Isoterma de Alta Temperatura (Th)
+            for (let i = 0; i <= steps; i++) {
+                let v = V1 + (V2 - V1) * (i / steps);
+                let p = (n * R * Th) / v;
+                points.push({ x: v, y: p });
+            }
+
+            // Tramo 2 -> 3: Adiabática de Expansión (P * V^gamma = C)
+            const C23 = P2 * Math.pow(V2, gamma);
+            for (let i = 1; i <= steps; i++) {
+                let v = V2 + (V3 - V2) * (i / steps);
+                let p = C23 / Math.pow(v, gamma);
+                points.push({ x: v, y: p });
+            }
+
+            // Tramo 3 -> 4: Isoterma de Baja Temperatura (Tc)
+            for (let i = 1; i <= steps; i++) {
+                let v = V3 + (V4 - V3) * (i / steps);
+                let p = (n * R * Tc) / v;
+                points.push({ x: v, y: p });
+            }
+
+            // Tramo 4 -> 1: Adiabática de Compresión para cerrar el ciclo
+            const C41 = P4 * Math.pow(V4, gamma);
+            for (let i = 1; i <= steps; i++) {
+                let v = V4 + (V1 - V4) * (i / steps);
+                let p = C41 / Math.pow(v, gamma);
+                points.push({ x: v, y: p });
+            }
+
+            // === 3. RENDERIZADO DEL GRÁFICO (IDÉNTICO AL PRINCIPAL) ===
+            if (energyChart) {
+                energyChart.destroy();
+            }
+
+            energyChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Ciclo Carnot P-V',
+                        data: points,
+                        showLine: true,
+                        borderColor: '#a855f7', // Morado MNDR
+                        backgroundColor: 'rgba(168, 85, 247, 0.05)', // Sombreado interno sutil
+                        fill: true,
+                        borderWidth: 2.5,
+                        tension: 0.15, // Pequeña tensión física para suavizar el renderizado, sin deformar
+                        pointRadius: 0 // Escondemos los puntos para ver solo la línea fluida
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            grid: { color: gridColor },
+                            title: { display: true, text: 'Volumen Relativo (V)', color: textColor },
+                            ticks: { color: textColor }
+                        },
+                        y: {
+                            type: 'linear',
+                            grid: { color: gridColor },
+                            title: { display: true, text: 'Presión Relativa (P)', color: textColor },
+                            ticks: { color: textColor }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false } // Ocultar leyenda para un look más limpio
+                    }
+                }
+            });
+        }
+        function cambiarVista(tipo) {
+            const btnPV = document.getElementById('btn-pv');
+            const btnTS = document.getElementById('btn-ts');
+
+            // 1. Corregir clases para que coincidan con tu CSS (.active-apple)
+            if (btnPV && btnTS) {
+                btnPV.classList.toggle('active-apple', tipo === 'PV');
+                btnTS.classList.toggle('active-apple', tipo === 'TS');
+            }
+
+            // 2. Corregir el acceso a la gráfica (quitamos 'window.')
+            if (!myChart) {
+                mostrarAlerta('Gráfica no lista', 'Primero presiona "Analizar Telemetría" para inicializar el sistema.', 'warning');
+                return;
+            }
+
+            if (tipo === 'TS') {
+                // 3. Usar los IDs reales de tu HTML (gasAmount, v1, p1...)
+                const n = parseFloat(document.getElementById('gasAmount').value) || 1;
+                const R = 8.31446;
+                const uV = document.getElementById('unitV').value;
+                const uP = document.getElementById('unitP').value;
+
+                // Calculamos temperaturas actuales como lo hace tu función core
+                let temps = [];
+                for (let i = 1; i <= 4; i++) {
+                    let vSI = parseFloat(document.getElementById(`v${i}`).value) * factorV[uV];
+                    let pSI = parseFloat(document.getElementById(`p${i}`).value) * factorP[uP];
+                    temps.push((pSI * vSI) / (n * R));
+                }
+
+                const Th = Math.max(...temps);
+                const Tc = Math.min(...temps);
+
+                // Ratio de volumen para entropía (usamos V1 y V2 de la expansión isoterma)
+                const v1SI = parseFloat(document.getElementById('v1').value) * factorV[uV];
+                const v2SI = parseFloat(document.getElementById('v2').value) * factorV[uV];
+
+                const s1 = 10; // Punto inicial estético
+                const ds = n * R * Math.log(v2SI / v1SI);
+                const s2 = s1 + ds;
+
+                const datosTS = [
+                    { x: s1, y: Th }, { x: s2, y: Th },
+                    { x: s2, y: Tc }, { x: s1, y: Tc }, { x: s1, y: Th }
+                ];
+
+                // 4. Actualización manual de ejes y datos
+                myChart.options.scales.x.title.text = 'Entropía (J/K)';
+                myChart.options.scales.y.title.text = 'Temperatura (K)';
+
+                // Ajuste dinámico de escalas para que el rectángulo se vea bien
+                myChart.options.scales.x.max = s2 * 1.2;
+                myChart.options.scales.y.max = Th * 1.2;
+
+                myChart.data.datasets[0].data = datosTS;
+                myChart.data.datasets[0].label = 'Ciclo T-s (Entropía)';
+                myChart.data.datasets[0].tension = 0; // Cuadrado perfecto
+                myChart.data.datasets[0].borderColor = '#a855f7'; // Morado neón
+            } else {
+                // En lugar de recargar la página, simplemente re-calculamos la vista P-V
+                intentarAnalisis();
+                return;
+            }
+
+            myChart.update();
+        }
+        setTimeout(intentarAnalisis, 500);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,59 @@
+{
+  "name": "carnot-engine-bdag",
+  "version": "3.0.0",
+  "description": "Simulador termodinámico del Ciclo de Carnot - BDAG TEAM",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "author": "BDAG Team",
+  "license": "MNDR",
+  "devDependencies": {
+    "electron": "latest",
+    "electron-builder": "latest",
+    "electron-installer-windows": "^3.0.0"
+  },
+  "build": {
+    "appId": "com.mndrsystems.carnotengine",
+    "productName": "Carnot Engine",
+    "copyright": "Copyright © 2026 ",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "index.html",
+      "icon.ico",
+      "package.json",
+      "lib/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "icon": "icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico",
+      "uninstallDisplayName": "Desinstalar Carnot Engine",
+      "artifactName": "${productName}_Setup_${version}.${ext}"
+    }
+  }
+}
